@@ -116,6 +116,9 @@ void positioning_hunter_class::Odometry_Callback(const nav_msgs::msg::Odometry::
         //Speed
          speed = std::sqrt(velocity_x * velocity_x + velocity_y * velocity_y);
 
+        //Check forward or backwards
+        if(velocity_x<0) speed *= -1;
+
          //Position from odometry - not in use
          float position_hunter_x=odom_received->pose.pose.position.x;
          float position_hunter_y=odom_received->pose.pose.position.y;
