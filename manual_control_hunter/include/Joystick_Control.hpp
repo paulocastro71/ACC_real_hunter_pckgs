@@ -44,7 +44,7 @@ using std::placeholders::_3;
 #define MAX_ACCEL 5
 #define MAX_JOYSTICK_VAL 32767
 
-enum direction {go_forward,go_backwards,turn_left,turn_right,robot_stop,robot_standby};
+enum direction {FORWARD,BACKWARD,turn_left,turn_right,robot_stop,robot_standby};
 
 class joystick_control_class : public rclcpp::Node {
     public:
