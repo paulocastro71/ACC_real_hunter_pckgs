@@ -111,8 +111,10 @@ class adaptive_cruise_control_hunter_class : public rclcpp::Node {
        rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service;
 
     //PUBLISHERS
-        //PUBLISH TWIST
+        //PUBLISHERS
         rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr VelPublisher;
+        rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr RelDistPublisher;
+        rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr SafeDistPublisher;
 
         //Deactivate ACC
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr DeactivateACCPublisher;
@@ -121,7 +123,10 @@ class adaptive_cruise_control_hunter_class : public rclcpp::Node {
         geometry_msgs::msg::Twist vel;
         std_msgs::msg::String state;
         std_msgs::msg::Bool deactivate_acc_msg;
+        std_msgs::msg::Float32 rdist_msg;
+        std_msgs::msg::Float32 sdist_msg;
         rclcpp::Node::SharedPtr ServerNodeACC;
+        
 
 
     //ROS2

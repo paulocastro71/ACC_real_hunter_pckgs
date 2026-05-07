@@ -35,6 +35,12 @@ adaptive_cruise_control_hunter_class::adaptive_cruise_control_hunter_class()
     VelPublisher = this->create_publisher<geometry_msgs::msg::Twist>("acc_vel",1);
     vel = geometry_msgs::msg::Twist();
 
+    RelDistPublisher = this->create_publisher<std_msgs::msg::Float32>("relative_distance",1);
+    rdist_msg = std_msgs::msg::Float32();
+
+    SafeDistPublisher = this->create_publisher<std_msgs::msg::Float32>("safe_distance",1);
+    sdist_msg = std_msgs::msg::Float32();
+
     //Deactivate ACC Mode
     DeactivateACCPublisher = this->create_publisher<std_msgs::msg::Bool>("deactivate_acc_topic",1);
     deactivate_acc_msg = std_msgs::msg::Bool();
@@ -181,6 +187,12 @@ float adaptive_cruise_control_hunter_class::AdaptiveCruiseControl(const float ma
             RCLCPP_INFO(this->get_logger(),"Cruise Set Speed: %f",max_speed);
             RCLCPP_INFO(this->get_logger(),"---------------------------------------------");
 
+            //publish distance info to display in dashboard
+            rdist_msg.data = relative_distance;
+            sdist_msg.data = safe_distance;
+            RelDistPublisher->publish(rdist_msg);
+            SafeDistPublisher->publish(sdist_msg);
+            
             //logging to txt file
             //cout << relative_distance << ", " << safe_distance << ", " << curr_vel << ", " << acc_vel << ", " << vel_des << ", " << leader_vel << ", Following" << endl;
             return acc_vel;
@@ -204,6 +216,11 @@ float adaptive_cruise_control_hunter_class::AdaptiveCruiseControl(const float ma
             RCLCPP_INFO(this->get_logger(),"Relative Distance: %f",relative_distance);
             RCLCPP_INFO(this->get_logger(),"--------------------------------------------------");
 
+            //publish distance info to display in dashboard
+            rdist_msg.data = relative_distance;
+            sdist_msg.data = safe_distance;
+            RelDistPublisher->publish(rdist_msg);
+            SafeDistPublisher->publish(sdist_msg);
             //logging to txt file
             //cout << relative_distance << ", " << safe_distance << ", " << curr_vel << ", " << cruise_vel << ", " << max_speed << ", 0.0" <<", CruiseWithLeader" << endl;
             return cruise_vel;
