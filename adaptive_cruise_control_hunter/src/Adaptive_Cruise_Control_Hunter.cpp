@@ -145,12 +145,18 @@ float adaptive_cruise_control_hunter_class::AdaptiveCruiseControl(const float ma
         //Condition to switch between Cruise and Following Mode
         if ( relative_distance < (safe_distance * safety_gain))
         {
+            //   //    //    //  //  //
+            //     FOLLOWING MODE    //
+            //  //    //    //  //   //
+            //   Leader is in range  //
+            //  //  //  //  //  //   //
+
             safety_gain=1.7; //Acts as ON-OFF controller
 
             following = true;
 
             //Display mode in terminal
-            RCLCPP_INFO(this->get_logger(),"---------------FOLLOWING--------------");
+            RCLCPP_INFO(this->get_logger(),"------FOLLOWING MODE!------");
 
             float front_car_velocity =  leader_vel;
 
@@ -166,14 +172,14 @@ float adaptive_cruise_control_hunter_class::AdaptiveCruiseControl(const float ma
             float g_v = - lambda_v * (curr_vel - vel_des);  //DLS
             float acc_vel = curr_vel + (timestep * g_v);    //Euler Method
             
-            //LOGGING INFO TO TERMINAL
-            RCLCPP_INFO(this->get_logger(),"vel_desejada: %f",vel_des);
-            //RCLCPP_INFO(this->get_logger(),"vel_calculada: %f",acc_vel);
-            RCLCPP_INFO(this->get_logger(),"current_velocity: %f",curr_vel);
-            RCLCPP_INFO(this->get_logger(),"safe distance: %f",safe_distance);
-            RCLCPP_INFO(this->get_logger(),"relative distance: %f",relative_distance);
-            RCLCPP_INFO(this->get_logger(),"max speed for acc: %f",max_speed);
-            RCLCPP_INFO(this->get_logger(),"--------------------------------------------------");
+            //Show info in terminal
+            RCLCPP_INFO(this->get_logger(),"Desired Speed: %f",vel_des);
+            RCLCPP_INFO(this->get_logger(),"Target Speed: %f",acc_vel);
+            RCLCPP_INFO(this->get_logger(),"Current Speed: %f",curr_vel);
+            RCLCPP_INFO(this->get_logger(),"Safe Distance: %f",safe_distance);
+            RCLCPP_INFO(this->get_logger(),"Relative Distance: %f",relative_distance);
+            RCLCPP_INFO(this->get_logger(),"Cruise Set Speed: %f",max_speed);
+            RCLCPP_INFO(this->get_logger(),"---------------------------------------------");
 
             //logging to txt file
             //cout << relative_distance << ", " << safe_distance << ", " << curr_vel << ", " << acc_vel << ", " << vel_des << ", " << leader_vel << ", Following" << endl;
@@ -181,14 +187,21 @@ float adaptive_cruise_control_hunter_class::AdaptiveCruiseControl(const float ma
     
         }else{
 
-            //CRUISE MODE WITH LEADER IN DETECTION RANGE
+            //   //    //    //  //  //  //  //  //  //
+            //     CRUISE MODE WITH LEADER DETECTED  //
+            //  //    //    //  //   //  //  //  //  //
+            //   Speed Control with leader far away  //
+            //  //  //  //  //  //   //  //  //  //  //
+
             float g_v = - lambda_v * (curr_vel - max_speed);  //sistema dinâmico linear
             float cruise_vel = curr_vel + (timestep * g_v);      //método de euler
+
+            //Show info in terminal
             RCLCPP_INFO(this->get_logger(),"----------Cruise Mode with Leader in Range-------");
-            RCLCPP_INFO(this->get_logger(),"current_velocity: %f",curr_vel);
-            RCLCPP_INFO(this->get_logger(),"cruise_target_vel: %f",max_speed);
-            RCLCPP_INFO(this->get_logger(),"safe distance: %f",safe_distance);
-            RCLCPP_INFO(this->get_logger(),"current_distance: %f",relative_distance);
+            RCLCPP_INFO(this->get_logger(),"Current Speed: %f",curr_vel);
+            RCLCPP_INFO(this->get_logger(),"Cruise Set Speed: %f",max_speed);
+            RCLCPP_INFO(this->get_logger(),"Safe Distance: %f",safe_distance);
+            RCLCPP_INFO(this->get_logger(),"Relative Distance: %f",relative_distance);
             RCLCPP_INFO(this->get_logger(),"--------------------------------------------------");
 
             //logging to txt file
@@ -198,12 +211,20 @@ float adaptive_cruise_control_hunter_class::AdaptiveCruiseControl(const float ma
         }
     }else{
 
-        //CLASSIC CRUISE CONTROL MODE
+        //   //    //    //  //  //  //  //  //  //
+        //       CLASSIC CRUISE CONTROL MODE     //
+        //  //    //    //  //   //  //  //  //  //
+        //   Speed Control-Leader doesn't exist  //
+        //  //  //  //  //  //   //  //  //  //  //
+
+        //calculate step
         float g_v = - lambda_v * (curr_vel - max_speed);  //sistema dinâmico linear
         float cruise_vel = curr_vel + (timestep * g_v);      //método de euler
+
+        //Show info in terminal
         RCLCPP_INFO(this->get_logger(),"------Classic Cruise Mode------");
-        RCLCPP_INFO(this->get_logger(),"cruise_target_vel: %f",max_speed);
-        RCLCPP_INFO(this->get_logger(),"current_vel: %f",curr_vel);
+        RCLCPP_INFO(this->get_logger(),"Cruise Set Speed: %f",max_speed);
+        RCLCPP_INFO(this->get_logger(),"Current Speed: %f",curr_vel);
         RCLCPP_INFO(this->get_logger(),"--------------------------------------------------");
 
         //logging to txt file
