@@ -20,8 +20,23 @@ nearby_hunter_class::nearby_hunter_class()
     vehicle_zero = custom_msgs::msg::Positioning();
     vehicle_zero_exists = false;
 
-    //vehicle number one
-    //...
+    //these two additional vehicles are added in case there's more vehicles to work with in the future
+    //vehicle one
+    VelocityOneSub = this->create_subscription<std_msgs::msg::Float32>("vehicle_one_speed", 1, std::bind(&nearby_hunter_class::V1_Velocity_Callback, this, _1));
+    PoseOneSub = this->create_subscription<geometry_msgs::msg::PoseStamped>("vehicle_one_pose", 1, std::bind(&nearby_hunter_class::V1_Pose_Callback, this, _1));
+    //vehicle two
+    VelocityTwoSub = this->create_subscription<std_msgs::msg::Float32>("vehicle_two_speed", 1, std::bind(&nearby_hunter_class::V2_Velocity_Callback, this, _1));
+    PoseTwoSub = this->create_subscription<geometry_msgs::msg::PoseStamped>("vehicle_two_pose", 1, std::bind(&nearby_hunter_class::V2_Pose_Callback, this, _1));
+
+    //vehicle one msgs
+    geo_pose_one = geometry_msgs::msg::PoseStamped();
+    vehicle_one = custom_msgs::msg::Positioning();
+    vehicle_one_exists = false;
+
+    //vehicle two msgs
+    geo_pose_two = geometry_msgs::msg::PoseStamped();
+    vehicle_two = custom_msgs::msg::Positioning();
+    vehicle_two_exists = false;
     
 
     //PUBLISHER
@@ -66,10 +81,45 @@ void nearby_hunter_class::Velocity_Leader_Callback(const std_msgs::msg::Float32:
 
 }
 
+//------------------VEHICLE ONE------------------------------------------------------------------------------//
+void nearby_hunter_class::V1_Pose_Callback(const geometry_msgs::msg::PoseStamped::ConstPtr& pose_one_msg)
+{
+    //Get vehicle zero pose
+    vehicle_one.pose.pose = pose_one_msg->pose;
+    vehicle_one_exists = true;
+   
+}
+void nearby_hunter_class::V1_Velocity_Callback(const std_msgs::msg::Float32::ConstPtr& speed_one_msg)
+{
+    //Get vehicle zero speed
+    vehicle_one.velx.data = speed_one_msg->data;
+    vehicle_one_exists = true;
+
+}
+
+//------------------VEHICLE TWO---------------------------------------------------------------------------//
+void nearby_hunter_class::V2_Pose_Callback(const geometry_msgs::msg::PoseStamped::ConstPtr& pose_two_msg)
+{
+    //Get vehicle zero pose
+    vehicle_two.pose.pose = pose_two_msg->pose;
+    vehicle_two_exists = true;
+   
+}
+void nearby_hunter_class::V2_Velocity_Callback(const std_msgs::msg::Float32::ConstPtr& speed_two_msg)
+{
+    //Get vehicle zero speed
+    vehicle_two.velx.data = speed_two_msg->data;
+    vehicle_two_exists = true;
+}
+//-------------------------------------------------------------------------------------------------------//
+
+
 void nearby_hunter_class::UpdateArray(){
     double x_geo=0;
     double y_geo=0;
     custom_msgs::msg::Positioning msg0;
+    custom_msgs::msg::Positioning msg1;
+    custom_msgs::msg::Positioning msg2;
     
     NearbyHunterMsg.positioning_array.clear();
     
@@ -89,6 +139,32 @@ void nearby_hunter_class::UpdateArray(){
         RCLCPP_INFO(this->get_logger(),"Hunter detected at:");
         RCLCPP_INFO(this->get_logger(),"X: %f, Y: %f;",geo_pose_zero.pose.position.x,geo_pose_zero.pose.position.y);
         
+    }
+
+    if(vehicle_one_exists){
+        RCLCPP_INFO(this->get_logger(),"Reading position from other Hunter...");
+        msg1 = vehicle_one;
+        msg1.pose.header.frame_id="vehicle_one";
+        msg1.pose.header.stamp = this->get_clock()->now();
+        NearbyHunterMsg.positioning_array.push_back(msg1);
+        geo_pose_one=msg1.pose;
+        
+        RCLCPP_INFO(this->get_logger(),"Hunter detected at:");
+        RCLCPP_INFO(this->get_logger(),"X: %f, Y: %f;",geo_pose_one.pose.position.x,geo_pose_one.pose.position.y);
+        
+    }
+
+
+    if(vehicle_two_exists){
+        RCLCPP_INFO(this->get_logger(),"Reading position from other Hunter...");
+        msg2 = vehicle_two;
+        msg2.pose.header.frame_id="vehicle_two";
+        msg2.pose.header.stamp = this->get_clock()->now();
+        NearbyHunterMsg.positioning_array.push_back(msg2);
+        geo_pose_two=msg2.pose;
+        
+        RCLCPP_INFO(this->get_logger(),"Hunter detected at:");
+        RCLCPP_INFO(this->get_logger(),"X: %f, Y: %f;",geo_pose_two.pose.position.x,geo_pose_two.pose.position.y);
     } 
 
 }
@@ -123,6 +199,8 @@ int main(int argc, char **argv)
         
         //Update TF2 Tree with nearby vheicles data. Find Leader relies on this tf2 tree!
         if(node->vehicle_zero_exists) tf_node->UpdateTransform(node->geo_pose_zero);
+        if(node->vehicle_one_exists) tf_node->UpdateTransform(node->geo_pose_one);
+        if(node->vehicle_two_exists) tf_node->UpdateTransform(node->geo_pose_two);
 
         rclcpp::spin_some(node);
 	    rate.sleep();

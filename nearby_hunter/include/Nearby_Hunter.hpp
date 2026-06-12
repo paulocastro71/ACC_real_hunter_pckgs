@@ -61,10 +61,28 @@ class nearby_hunter_class : public rclcpp::Node {
         //Publish Nearby Msg
         void PublishData();
 
+        //In case there are other vehicles: (in this case we only have one other hunter so we only use calllbacks above)
+
+        //vehicle one
+        void V1_Velocity_Callback(const std_msgs::msg::Float32::ConstPtr& speed_one_msg);
+        void V1_Pose_Callback(const geometry_msgs::msg::PoseStamped::ConstPtr& pose_one_msg);
+        
+
+        //vehicle two
+        void V2_Velocity_Callback(const std_msgs::msg::Float32::ConstPtr& speed_two_msg);
+        void V2_Pose_Callback(const geometry_msgs::msg::PoseStamped::ConstPtr& pose_two_msg);
+
+        
+        
         custom_msgs::msg::Positioning leading_vehicle;
+
         geometry_msgs::msg::PoseStamped geo_pose_zero;
+        geometry_msgs::msg::PoseStamped geo_pose_one;
+        geometry_msgs::msg::PoseStamped geo_pose_two;
 
         bool vehicle_zero_exists;
+        bool vehicle_one_exists;
+        bool vehicle_two_exists;
  
 
     private:
@@ -74,6 +92,12 @@ class nearby_hunter_class : public rclcpp::Node {
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr VelocityLeaderSub;
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr PoseLeaderSub;
 
+        rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr VelocityOneSub;
+        rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr PoseOneSub;
+
+        rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr VelocityTwoSub;
+        rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr PoseTwoSub;
+
         //custom_msgs::msg::PoseArray poses;
 
 
@@ -81,6 +105,8 @@ class nearby_hunter_class : public rclcpp::Node {
         rclcpp::Publisher<custom_msgs::msg::PositioningArray>::SharedPtr NearbyHunterPub;
         custom_msgs::msg::PositioningArray NearbyHunterMsg;
         custom_msgs::msg::Positioning vehicle_zero;
+        custom_msgs::msg::Positioning vehicle_one;
+        custom_msgs::msg::Positioning vehicle_two;
         
         
 
