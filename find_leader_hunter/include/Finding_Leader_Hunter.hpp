@@ -59,12 +59,16 @@ class finding_leader_hunter_class : public rclcpp::Node {
     //Find Leader Algorithm
     bool Find_Leading_Vehicle();
 
+    bool VerifyLeadingVehicle();
+
     //Custom msg that holds leader pose and speed
     custom_msgs::msg::Positioning leading_vehicle;
 
     //flags for state change
     bool nearby_cars_flag;
     bool converted;
+    int leader_id;
+    bool leader_found;
 
 
     private:

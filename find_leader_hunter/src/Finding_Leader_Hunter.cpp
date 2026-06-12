@@ -27,6 +27,7 @@ finding_leader_hunter_class::finding_leader_hunter_class()
     //Init Flags
     nearby_cars_flag = false;
     converted = false;
+    leader_id = 100;
 
 }
 
@@ -124,7 +125,8 @@ bool finding_leader_hunter_class::Find_Leading_Vehicle(){
     //aux vars to check distance
     float distance_to_self = 1001;
     float closest_distance_to_self = 1000;
-    bool  leader_found=false;
+    bool  new_leader_found = false;
+    leader_found = false;
 
     if (converted==true){ //Check transformed data is available
     
@@ -153,26 +155,52 @@ bool finding_leader_hunter_class::Find_Leading_Vehicle(){
                 if (distance_to_self<closest_distance_to_self && ori_z < 1.5 && ori_z> -1.5){  //Verificaçao de proximidade e orientação
 
                     closest_distance_to_self = distance_to_self;
-                    leading_vehicle = nearby_cars_vehicle.positioning_array[i];
-                    
-                    leader_found = true;
+                    leader_id=i;
+                    //leading_vehicle = nearby_cars_vehicle.positioning_array[i]; previous version
+                    new_leader_found = true;
+                   // leader_found = true; //previous version
                 }
             }
         }
-
+        /*
         if(leader_found){
             RCLCPP_INFO(this->get_logger(),"LEADER FOUND! POSITION: (%f,%f)",leading_vehicle.pose.pose.position.x,leading_vehicle.pose.pose.position.y);
-            return true;
-        }
+            return true; //old
+        }*/
     }
+    /*
     //RCLCPP_INFO(this->get_logger(),"NO LEADING VEHICLE DETECTED!!");
-    return false;
+    return false;  //old
+    */
+}
+
+bool finding_leader_hunter_class::VerifyLeadingVehicle(){
+
+    RCLCPP_INFO(this->get_logger(),"Verifying Leader...");
+    if(leader_id==100){
+        RCLCPP_INFO(this->get_logger(),"NO LEADER FOUND!");
+        return false;
+    }
+    RCLCPP_INFO(this->get_logger(),"LeaderID: %d",leader_id);
+    leading_vehicle = nearby_cars_vehicle.positioning_array[leader_id];
+    float relative_distance = sqrt(pow(leading_vehicle.pose.pose.position.x,2)+pow(leading_vehicle.pose.pose.position.y,2));
+    RCLCPP_INFO(this->get_logger(),"Distance to Leader: %f",relative_distance);
+    if(relative_distance>15){
+        leader_id=100;
+        return false;
+    }else{
+        RCLCPP_INFO(this->get_logger(),"Leader Found! Position: ( %f, %f )",leading_vehicle.pose.pose.position.x,leading_vehicle.pose.pose.position.y);
+        RCLCPP_INFO(this->get_logger(),"-----------------------------------------------------------");
+        return true;
+    }
+
+
 }
 
 void finding_leader_hunter_class::PublishData(){
     
     //LOG DISTANCE TO TERMINAL TO ENSURE CORRECT MEASUREMENT
-    RCLCPP_INFO(this->get_logger(),"Distance to Leader: %f",sqrt(pow(leading_vehicle.pose.pose.position.x,2)+pow(leading_vehicle.pose.pose.position.y,2)));
+    //RCLCPP_INFO(this->get_logger(),"Distance to Leader: %f",sqrt(pow(leading_vehicle.pose.pose.position.x,2)+pow(leading_vehicle.pose.pose.position.y,2)));
     
     //Publish Leader Data
     LeaderPub->publish(leading_vehicle);
@@ -201,11 +229,17 @@ int main(int argc, char **argv)
             node->ConvertFrame();
 
             //Find leader algorithm
-            if(node->Find_Leading_Vehicle()){
+            ///if(node->Find_Leading_Vehicle()){ //old
+
+            node->Find_Leading_Vehicle(); //new
+
+            if(node->VerifyLeadingVehicle()){ //new
 
                 //publish data when leader exists
-                node->PublishData();
+                node->PublishData(); //old and new
+
             }
+
             //clear flags
             node->nearby_cars_flag=false;
         }
