@@ -323,7 +323,7 @@ bool positioning_ben_class::SensorsReady(){
    // if(!received_imu_data) RCLCPP_ERROR(this->get_logger(),"NO IMU DATA RECEIVED!");
     if(!received_ben_data) RCLCPP_ERROR(this->get_logger(),"NO BEN DATA RECEIVED!");
     return received_ben_data; //&& received_imu_data;
-    
+
 }
 
 int main(int argc, char **argv)
@@ -505,7 +505,7 @@ int main(int argc, char **argv)
             node->PublishData();
 
             //Publish new data to tf tree - find leader relies on this info, not in PublishData()
-            tf_node->UpdateTransform(node->geo_pose);
+            //tf_node->UpdateTransform(node->geo_pose); //nearby vehicles does this
 
 
             break;

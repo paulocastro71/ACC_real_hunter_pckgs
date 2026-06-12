@@ -7,7 +7,7 @@ TfBroadcaster::TfBroadcaster():
     // Define the "parent" frame
     transf_.header.frame_id = "geo";
     // Define the "child" frame
-    transf_.child_frame_id = "leader";
+    transf_.child_frame_id = "vehicle_one";
   }
   
   void TfBroadcaster::UpdateTransform(const geometry_msgs::msg::PoseStamped geo_pose){
