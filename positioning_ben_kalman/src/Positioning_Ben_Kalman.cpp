@@ -15,13 +15,16 @@ positioning_ben_class::positioning_ben_class()
     //OdomSub = this->create_subscription<nav_msgs::msg::Odometry>("odom_leader", 1, std::bind(&positioning_ben_class::Odometry_Callback, this, _1));
     //ZedSub = this->create_subscription<sensor_msgs::msg::Imu>("imu", 1, std::bind(&positioning_ben_class::ZedOrientation_Callback, this, _1));
     
-    BenSub = this->create_subscription<gps_msgs::msg::GPSFix>("ben_data", qos_profile, std::bind(&positioning_ben_class::GPSFix_Callback, this, _1));
+    BenSub = this->create_subscription<gps_msgs::msg::GPSFix>("leader/message", qos_profile, std::bind(&positioning_ben_class::GPSFix_Callback, this, _1));
     
     
     //PUBLISHERS
 
+    //publish GPS Filtered
+    GNSSFilteredPub = this->create_publisher<sensor_msgs::msg::NavSatFix>("ben_navsatfix_filtered",1);
+
     //Publisher for Latitude and Longitude 
-    PosePublisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("vehicle_one_pose_",1);
+    PosePublisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("vehicle_one_pose",1);
     pose_msg = geometry_msgs::msg::PoseStamped();
 
     //Publisher for UTM X Y Coordinates
@@ -171,8 +174,6 @@ void positioning_ben_class::GPSFix_Callback(const gps_msgs::msg::GPSFix::ConstPt
         altitude=gps_received->altitude;
     }
 
-    
-
      //Orientation from Odometry
         // o_x=gps_received->orientation.x;
         //o_y=gps_received->orientation.y;
@@ -184,18 +185,26 @@ void positioning_ben_class::GPSFix_Callback(const gps_msgs::msg::GPSFix::ConstPt
         //odom_quat.setY(o_y);
         //odom_quat.setZ(o_z);
         //odom_quat.setW(o_w);
-        odom_quat.setRPY(0,0,gps_received->track);
 
-        odom_quat = odom_quat * quat;
+        //In case of using Track as yaw;
+            
+          //  odom_quat.setRPY(0,0,gps_received->track);
 
-        o_x = odom_quat.x();
-        o_y = odom_quat.y();
-        o_z = odom_quat.z();
-        o_w = odom_quat.w();
+        //In case of using RPY;
+            //odom_quat.setRPY(gps_received->roll,gps_received->pitch,gps_received->dip);
+
+       // odom_quat = odom_quat * quat;
+
+       // o_x = odom_quat.x();
+       // o_y = odom_quat.y();
+       // o_z = odom_quat.z();
+       // o_w = odom_quat.w();
+
+        ben_track = (gps_received->track*M_PI/180) - (M_PI/2);
 
 
         //Yaw (orientation in relation to z axis)
-        phi_robot = atan2(2*(o_x*o_y + o_z*o_w),1-2*(o_y*o_y + o_z*o_z));
+        //phi_robot = atan2(2*(o_x*o_y + o_z*o_w),1-2*(o_y*o_y + o_z*o_z));
 
         speed = gps_received->speed;
 
@@ -212,8 +221,31 @@ void positioning_ben_class::Calibrate_Orientation(){
 
     angle_offset = atan2(dy,dx);
     quat.setRPY(0,0,angle_offset);
-    RCLCPP_INFO(this->get_logger(),"CALIBRATED!!!!!!!!!!!!!!!!!");
+    RCLCPP_INFO(this->get_logger(),"CALIBRATED!!!");
    
+
+}
+
+void positioning_ben_class::Calculate_Orientation(){
+
+    curr_xgeo=x_geo;
+    curr_ygeo=y_geo;
+
+    double dx=curr_xgeo - prev_xgeo;
+    double dy=curr_ygeo - prev_ygeo;
+    if(!(dx==0 && dy==0)){
+         angle_offset = atan2(dy,dx);
+        quat.setRPY(0,0,angle_offset);
+        //phi_robot=angle_offset;
+    };  //no movement, no need to calculate orientation
+   
+    
+    prev_xgeo=curr_xgeo;
+    prev_ygeo=curr_ygeo;
+    phi_robot = -ben_track;
+    RCLCPP_INFO(this->get_logger(),"Yaw: %f",phi_robot);
+    RCLCPP_INFO(this->get_logger(),"Angle Offset: %f",angle_offset);
+    
 
 }
 void positioning_ben_class::PublishData()
@@ -244,6 +276,10 @@ void positioning_ben_class::PublishData()
         pose_park_msg.pose.position.y= y_geo_filtered - 4589000.0;
         pose_park_msg.pose.position.z=altitude;
 
+        gnssfiltered_msg.latitude = lat_filtered;
+        gnssfiltered_msg.longitude = lon_filtered;
+        gnssfiltered_msg.altitude = altitude;
+
     //ORIENTATION
         pose_msg.pose.orientation.x=o_x;
         pose_msg.pose.orientation.y=o_y;
@@ -261,7 +297,7 @@ void positioning_ben_class::PublishData()
         PoseMetersPublisher->publish(pose_meters_msg);
         PoseParkPublisher->publish(pose_park_msg);
         SpeedPublisher->publish(speed_msg);
-
+        GNSSFilteredPub->publish(gnssfiltered_msg);
 }
 
 void positioning_ben_class::Convert_GNSS_Geo()
@@ -276,8 +312,8 @@ void positioning_ben_class::Convert_GNSS_Geo()
     geo_pose.pose.orientation.z=o_z;
     geo_pose.pose.orientation.w=o_w;
     RCLCPP_INFO(this->get_logger(),"X: %f, Y: %f",x_geo,y_geo);
-    RCLCPP_INFO(this->get_logger(),"Yaw: %f",phi_robot);
-    RCLCPP_INFO(this->get_logger(),"Angle Offset: %f",angle_offset);
+    RCLCPP_INFO(this->get_logger(),"Lat: %f, Lon: %f",latitude,longitude);
+    Calculate_Orientation();
     cout << setprecision(10);
     cout << lat_filtered << ", " << lon_filtered << ", " << x_geo_filtered << ", " << y_geo_filtered << ", " << latitude << ", " << longitude << ", " << x_geo << ", " << y_geo << ", " << phi_robot << ", " << angle_offset << endl;
     //cout << lat_filtered << ", " << lon_filtered << ", " << x_geo_filtered << ", " << y_geo_filtered << endl;
@@ -450,7 +486,8 @@ int main(int argc, char **argv)
     switch (STATE){
         case STANDBY:
             
-            if(node->SensorsReady()) STATE = CALIBRATION;
+            //if(node->SensorsReady()) STATE = CALIBRATION;
+            if(node->SensorsReady()) STATE = INIT_FILTER;
             
             break;
 
@@ -476,7 +513,7 @@ int main(int argc, char **argv)
             
             node->Convert_GNSS_Geo();
             //prepare initial state vector wit current position
-            x0 << node->last_x_geo, node->last_y_geo, 0, 0; 
+            x0 << node->x_geo, node->y_geo, 0, 0; 
             filter_initialized=true; //update flag
             kf->init(0,x0);
             RCLCPP_INFO(node->get_logger()," State Vector Initialized!");
@@ -490,7 +527,6 @@ int main(int argc, char **argv)
             RCLCPP_INFO(node->get_logger()," FILTER IS ACTIVE!");
             //Convert GPS to X Y coordinates to be fed to filter
             node->Convert_GNSS_Geo();
-
             //feed measurements to filter
             z << node->x_geo, node->y_geo, (node->speed * cos(node->phi_robot)), (node->speed * sin(node->phi_robot));
             kf->update(z);

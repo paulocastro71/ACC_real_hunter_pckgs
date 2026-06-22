@@ -60,6 +60,7 @@ class positioning_ben_class : public rclcpp::Node {
         void Save_First_Position();
         void Save_Last_Position();
         void Calibrate_Orientation();
+        void Calculate_Orientation();
         void setEnableACC(bool a);
         bool SensorsReady();
         void GNSS_Callback(const sensor_msgs::msg::NavSatFix::ConstPtr& gnss_received);
@@ -102,10 +103,12 @@ class positioning_ben_class : public rclcpp::Node {
 
         double first_x_geo; double first_y_geo;
         double last_x_geo; double last_y_geo;
+        double curr_xgeo; double curr_ygeo;
+        double prev_xgeo; double prev_ygeo;
         bool calibrated;
         bool first_position_saved;
         bool last_position_saved;
-    
+        double ben_track;
     private:
     //SUBSCRIBERS
         rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr GnssSub;
@@ -137,6 +140,9 @@ class positioning_ben_class : public rclcpp::Node {
 
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr LatencyPublisher;
         std_msgs::msg::Bool latency_msg;
+
+        rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr GNSSFilteredPub;
+        sensor_msgs::msg::NavSatFix gnssfiltered_msg;
 
 
 
