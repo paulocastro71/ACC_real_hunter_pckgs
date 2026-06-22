@@ -17,8 +17,7 @@
   <depend>std_srvs</depend>
   <depend>geometry_msgs</depend>
   <depend>SDL2</depend>
-  
-  
+  <depend>sensor_msgs</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

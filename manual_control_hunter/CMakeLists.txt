@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(SDL2 REQUIRED)
 
 # uncomment the following section in order to fill in
@@ -37,7 +38,7 @@ ament_package()
 add_executable(keyboard src/Keyboard_Control.cpp)
 add_executable(joystick src/Joystick_Control.cpp)
 ament_target_dependencies(keyboard rclcpp std_msgs geometry_msgs)
-ament_target_dependencies(joystick rclcpp std_msgs geometry_msgs SDL2 std_srvs)
+ament_target_dependencies(joystick rclcpp std_msgs geometry_msgs SDL2 std_srvs sensor_msgs)
 
 install(TARGETS
     keyboard

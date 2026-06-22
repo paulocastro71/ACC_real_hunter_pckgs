@@ -20,6 +20,10 @@ joystick_control_class::joystick_control_class()
         EnableACCSub = this->create_subscription<std_msgs::msg::Bool>("enable_acc_topic", 1, std::bind(&joystick_control_class::Enable_ACC_Callback, this, _1));
         DeactivateACCSub = this->create_subscription<std_msgs::msg::Bool>("deactivate_acc_topic", 1, std::bind(&joystick_control_class::Deactivate_ACC_Callback, this, _1));
 
+        SectorsSub = this->create_subscription<sensor_msgs::msg::LaserScan>("sectors_dist_obs", 1, std::bind(&joystick_control_class::Sectors_Coppelia_Callback, this, _1)); 
+        distancias.assign(n_setores, 3000.0);
+        theta_obs.assign(n_setores, 0);
+
 //PUBLISHER
         //Vel PUblisher
         VelPublisher = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel",1);
@@ -139,8 +143,18 @@ void joystick_control_class::PublishData()
    
     vel.linear.x=linear_velocity;
     vel.angular.z=angular_velocity;
-   
-    if(stop)
+    float emergency_stop=false;
+    if(received_sectors){
+        emergency_stop = distancias[3]< 0.5 && distancias[4]< 0.5 && distancias[5]< 0.5;
+        received_sectors=false;
+        RCLCPP_INFO(this->get_logger(),"Looking for Obstacles Ahead!");
+
+    }else{
+        RCLCPP_INFO(this->get_logger(),"CAUTION! Not Looking Ahead!!");
+    }
+    
+    
+    if(stop || emergency_stop)
     {
         vel.linear.x=0;
         vel.angular.z=0;
@@ -201,6 +215,14 @@ void joystick_control_class::Deactivate_ACC_Callback(const std_msgs::msg::Bool::
     RCLCPP_INFO(this->get_logger(),"ACC DEACTIVATED DUE TO LOW SPEED");
     //received_enable_command=true;
     //send_request_flag=true; //no need to send request for acc because the command itselfs comes from that same node
+}
+void joystick_control_class::Sectors_Coppelia_Callback(const sensor_msgs::msg::LaserScan::ConstPtr& sectors_received)
+{
+    
+    received_sectors=true;
+    distancias=sectors_received->ranges;
+    //theta_obs=sectors_received->intensities;
+    theta_obs = {-0.7854, -0.5236, -0.2618, 0.0, 0.2618, 0.5236, 0.7854};
 }
 
 int joystick_control_class::SendRequest(bool command)

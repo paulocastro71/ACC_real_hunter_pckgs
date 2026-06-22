@@ -20,6 +20,7 @@ using namespace std;
 #include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/char.hpp>
 #include <std_srvs/srv/set_bool.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
 #include <vector>
 #include <geometry_msgs/msg/twist.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
@@ -63,6 +64,7 @@ class joystick_control_class : public rclcpp::Node {
         void ACC_Callback(const geometry_msgs::msg::Twist::ConstPtr& vel_received);
         void Enable_ACC_Callback(const std_msgs::msg::Bool::ConstPtr& enable_received);
         void Deactivate_ACC_Callback(const std_msgs::msg::Bool::ConstPtr& msg_received);
+        void Sectors_Coppelia_Callback(const sensor_msgs::msg::LaserScan::ConstPtr& sectors_received);
         //FLAGS
         bool start_moving;
         bool enable_acc;
@@ -84,11 +86,15 @@ class joystick_control_class : public rclcpp::Node {
         bool value_stop;
         direction robot_state;
         float vel_from_acc;
+        std::vector<float>distancias;
+        std::vector<float>theta_obs; 
+        bool received_sectors;
         
 
     private:
 
     //SUBSCRIBERS
+        rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr SectorsSub;  
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr ThrottleSub;
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr SteeringSub;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr StopSub;
