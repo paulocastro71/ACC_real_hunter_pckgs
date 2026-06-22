@@ -23,7 +23,7 @@ nearby_hunter_class::nearby_hunter_class()
     //these two additional vehicles are added in case there's more vehicles to work with in the future
     //vehicle one
     VelocityOneSub = this->create_subscription<std_msgs::msg::Float32>("vehicle_one_speed", 1, std::bind(&nearby_hunter_class::V1_Velocity_Callback, this, _1));
-    PoseOneSub = this->create_subscription<geometry_msgs::msg::PoseStamped>("vehicle_one_pose", 1, std::bind(&nearby_hunter_class::V1_Pose_Callback, this, _1));
+    PoseOneSub = this->create_subscription<geometry_msgs::msg::PoseStamped>("vehicle_one_pose_meters", 1, std::bind(&nearby_hunter_class::V1_Pose_Callback, this, _1));
     //vehicle two
     VelocityTwoSub = this->create_subscription<std_msgs::msg::Float32>("vehicle_two_speed", 1, std::bind(&nearby_hunter_class::V2_Velocity_Callback, this, _1));
     PoseTwoSub = this->create_subscription<geometry_msgs::msg::PoseStamped>("vehicle_two_pose", 1, std::bind(&nearby_hunter_class::V2_Pose_Callback, this, _1));
