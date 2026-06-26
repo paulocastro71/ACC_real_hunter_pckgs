@@ -9,21 +9,17 @@ positioning_ben_class::positioning_ben_class()
     qos_profile.reliability(rclcpp::ReliabilityPolicy::BestEffort);
  //SUBSCRIBERS
 
-    //GnssSub = this->create_subscription<sensor_msgs::msg::NavSatFix>("device/gps/navsatfix_leader", qos_profile, std::bind(&positioning_ben_class::GNSS_Callback, this, _1));
-    //ImuSub = this->create_subscription<sensor_msgs::msg::Imu>("imu/data", 1, std::bind(&positioning_ben_class::Imu_Callback, this, _1));
-    //SpeedometerSub = this->create_subscription<std_msgs::msg::Float32>("carla/ego_vehicle/speedometer", 1, std::bind(&positioning_ben_class::Speedometer_Callback, this, _1));
-    //OdomSub = this->create_subscription<nav_msgs::msg::Odometry>("odom_leader", 1, std::bind(&positioning_ben_class::Odometry_Callback, this, _1));
-    //ZedSub = this->create_subscription<sensor_msgs::msg::Imu>("imu", 1, std::bind(&positioning_ben_class::ZedOrientation_Callback, this, _1));
     
-    BenSub = this->create_subscription<gps_msgs::msg::GPSFix>("leader/message", qos_profile, std::bind(&positioning_ben_class::GPSFix_Callback, this, _1));
+    BenSub = this->create_subscription<gps_msgs::msg::GPSFix>("leader/message", 1, std::bind(&positioning_ben_class::GPSFix_Callback, this, _1));
     
     
     //PUBLISHERS
 
     //publish GPS Filtered
     GNSSFilteredPub = this->create_publisher<sensor_msgs::msg::NavSatFix>("ben_navsatfix_filtered",1);
+    GNSSUnFilteredPub = this->create_publisher<sensor_msgs::msg::NavSatFix>("ben_navsatfix_unfiltered",1);
 
-    //Publisher for Latitude and Longitude 
+    //Publisher for Latitude and Longitude
     PosePublisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("vehicle_one_pose",1);
     pose_msg = geometry_msgs::msg::PoseStamped();
 
@@ -171,6 +167,10 @@ void positioning_ben_class::GPSFix_Callback(const gps_msgs::msg::GPSFix::ConstPt
         //Retrieve GNSS data
         latitude=gps_received->latitude;
         longitude=gps_received->longitude;
+        
+    }
+
+    if(!isnan(gps_received->altitude)){
         altitude=gps_received->altitude;
     }
 
@@ -264,21 +264,26 @@ void positioning_ben_class::PublishData()
         //position from GNSS (longitude, latitude)
         //pose_msg.pose.position.x=x_geo_filtered;
         //pose_msg.pose.position.y=y_geo_filtered;
+    //position from GNSS (longitude, latitude)
         pose_msg.pose.position.x=lon_filtered;
         pose_msg.pose.position.y=lat_filtered;
         pose_msg.pose.position.z=altitude;
-
+    //position in UTM coordinates
         pose_meters_msg.pose.position.x=x_geo_filtered;
         pose_meters_msg.pose.position.y=y_geo_filtered;
         pose_meters_msg.pose.position.z=altitude;
-
+    //position in UTM coordinates with less units (130 meters instead of 559130 meters)
         pose_park_msg.pose.position.x= x_geo_filtered - 559000.0;
         pose_park_msg.pose.position.y= y_geo_filtered - 4589000.0;
         pose_park_msg.pose.position.z=altitude;
-
+    //NavSatFix Filtered
         gnssfiltered_msg.latitude = lat_filtered;
         gnssfiltered_msg.longitude = lon_filtered;
         gnssfiltered_msg.altitude = altitude;
+    //NavSatFix Unfiltered
+        gnssunfiltered_msg.latitude = latitude;
+        gnssunfiltered_msg.longitude = longitude;
+        gnssunfiltered_msg.altitude = altitude;
 
     //ORIENTATION
         pose_msg.pose.orientation.x=o_x;
@@ -298,6 +303,7 @@ void positioning_ben_class::PublishData()
         PoseParkPublisher->publish(pose_park_msg);
         SpeedPublisher->publish(speed_msg);
         GNSSFilteredPub->publish(gnssfiltered_msg);
+        GNSSUnFilteredPub->publish(gnssunfiltered_msg);
 }
 
 void positioning_ben_class::Convert_GNSS_Geo()
@@ -379,8 +385,8 @@ int main(int argc, char **argv)
 
     double sigma_posx = 0.15;  //measurement noise covariance position_x
     double sigma_posy = 0.15;  //measurement noise covariance position_y
-    double sigma_velx = 0.01;//measurement noise covariance velocity_x
-    double sigma_vely = 0.01;//measurement noise covariance velocity_y
+    double sigma_velx = 0.2;//measurement noise covariance velocity_x
+    double sigma_vely = 0.2;//measurement noise covariance velocity_y
 
     double dt = 0.05; // Time step
 

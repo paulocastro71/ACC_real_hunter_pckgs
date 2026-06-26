@@ -144,6 +144,9 @@ class positioning_ben_class : public rclcpp::Node {
         rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr GNSSFilteredPub;
         sensor_msgs::msg::NavSatFix gnssfiltered_msg;
 
+        rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr GNSSUnFilteredPub;
+        sensor_msgs::msg::NavSatFix gnssunfiltered_msg;
+
 
 
 
